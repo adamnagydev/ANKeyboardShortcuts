@@ -2,13 +2,47 @@
 import Carbon.HIToolbox
 import SwiftUI
 
+public final class LocalizationLanguageProvider {
+    /// Provides the currently used language of the
+    /// app used to localize with.
+    public static var language: String {
+        Self.shared._language
+    }
+
+    /// Override translation language.
+    /// Useful if you manually wish to set the
+    /// language for localizations.
+    public static func override(_ language: String) {
+        Self.shared._language = language
+    }
+
+    /// Reset the language to default.
+    public static func reset() {
+        override(Self.default)
+    }
+
+    // MARK: Private
+
+    private init() {}
+    private static let shared = LocalizationLanguageProvider()
+    private static var `default`: String { Locale.autoupdatingCurrent.languageCode ?? "en" }
+    private var _language: String = LocalizationLanguageProvider.default
+}
 
 extension String {
 	/**
 	Makes the string localizable.
 	*/
 	var localized: String {
-		NSLocalizedString(self, bundle: .module, comment: self)
+        let language = LocalizationLanguageProvider.language
+        guard
+            let bundlePath = Bundle.module.path(forResource: language, ofType: "lproj"),
+            let bundle = Bundle(path: bundlePath)
+        else {
+            return NSLocalizedString(self, bundle: .module, comment: self)
+        }
+
+		return NSLocalizedString(self, bundle: bundle, comment: self)
 	}
 }
 
